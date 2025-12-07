@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS | Sonar Threat Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --glass: rgba(15, 23, 42, 0.6);
+            --neon-blue: #0ea5e9;
+            --neon-green: #10b981;
+            --neon-red: #ef4444;
+            --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* --- BACKGROUND ANIMATION --- */
+        .ocean-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+        }
+        .grid-overlay {
+            position: absolute;
+            width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(14, 165, 233, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14, 165, 233, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px) translateZ(-200px); }
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed;
+            top: 0; width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(2, 6, 23, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+        }
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+        }
+        .nav-links button {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-left: 2rem;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .nav-links button:hover, .nav-links button.active {
+            color: var(--neon-blue);
+            text-shadow: 0 0 8px var(--neon-blue);
+        }
+
+        /* --- SECTIONS (PAGES) --- */
+        .page-section {
+            min-height: 100vh;
+            display: none; /* Hidden by default */
+            padding-top: 80px;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        .page-section.active { display: flex; flex-direction: column; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- HERO SECTION --- */
+        #home { justify-content: center; align-items: center; text-align: center; }
+        
+        .hero-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5rem;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--neon-blue);
+            margin-bottom: 2.5rem;
+        }
+        .cta-btn {
+            padding: 1rem 3rem;
+            background: rgba(14, 165, 233, 0.1);
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.4s;
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
+            text-decoration: none;
+        }
+        .cta-btn:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 30px rgba(14, 165, 233, 0.6);
+        }
+
+        /* --- SCANNER SECTION --- */
+        #scanner { justify-content: center; align-items: center; }
+        
+        .glass-panel {
+            width: 90%;
+            max-width: 1000px;
+            height: 70vh;
+            background: var(--glass);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Split View: Left (Upload), Right (Results) */
+        .panel-left, .panel-right {
+            flex: 1;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .panel-left { border-right: 1px solid rgba(255,255,255,0.05); }
+
+        .drop-zone {
+            width: 100%;
+            height: 300px;
+            border: 2px dashed rgba(14, 165, 233, 0.3);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: 0.3s;
+            cursor: pointer;
+            background: rgba(0,0,0,0.2);
+        }
+        .drop-zone:hover { border-color: var(--neon-blue); background: rgba(14, 165, 233, 0.05); }
+        .drop-zone i { font-size: 4rem; color: var(--text-dim); margin-bottom: 1rem; }
+
+        /* Scanning Animation */
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 5px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+            display: none;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; } 100% { top: 100%; }
+        }
+
+        /* Results */
+        .result-box {
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: 0.5s;
+        }
+        .result-box.visible { opacity: 1; transform: translateY(0); }
+        
+        .status-circle {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            border: 5px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- ABOUT SECTION --- */
+        #about { align-items: center; padding: 5rem 10%; }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+            width: 100%;
+        }
+        .tech-card {
+            background: rgba(255,255,255,0.03);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+        }
+        .tech-card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.06); }
+        .tech-card h3 { color: var(--neon-blue); margin-bottom: 1rem; font-family: 'Orbitron'; }
+
+    </style>
+</head>
+<body>
+
+    <div class="ocean-bg"><div class="grid-overlay"></div></div>
+
+    <nav>
+        <div class="logo"><i class="fa-solid fa-radar"></i> AEGIS</div>
+        <div class="nav-links">
+            <button onclick="showPage('home')" class="active" id="btn-home">Mission Control</button>
+            <button onclick="showPage('scanner')" id="btn-scanner">Sonar Feed</button>
+            <button onclick="showPage('about')" id="btn-about">Intelligence</button>
+        </div>
+    </nav>
+
+    <section id="home" class="page-section active">
+        <h1 class="hero-title">UNDERSEA<br>THREAT DETECTION</h1>
+        <p class="hero-subtitle">Advanced Neural Networks processing sonar data in real-time.</p>
+        <button class="cta-btn" onclick="showPage('scanner')">INITIATE SCAN</button>
+    </section>
+
+    <section id="scanner" class="page-section">
+        <div class="glass-panel">
+            <div class="panel-left">
+                <h2 style="margin-bottom: 1rem; font-family:'Orbitron'">DATA UPLOAD</h2>
+                <form id="upload-form">
+                    <input type="file" id="file-input" hidden accept="image/*">
+                    <div class="drop-zone" id="drop-zone">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p>Drag Sonar Imagery Here</p>
+                        <p style="font-size:0.8rem; color: var(--text-dim)">(or click to browse)</p>
+                        <img id="preview-img" style="max-width:100%; max-height:100%; display:none; border-radius:10px; margin-top:10px;">
+                        <div class="scan-line" id="scan-line"></div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="panel-right">
+                <div id="loading" style="display:none; text-align:center;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:3rem; color:var(--neon-blue);"></i>
+                    <p style="margin-top:1rem; letter-spacing:2px;">PROCESSING NEURAL PATHWAYS...</p>
+                </div>
+
+                <div id="result-box" class="result-box">
+                    <div id="status-circle" class="status-circle">
+                        <i id="status-icon" class="fa-solid fa-question"></i>
+                    </div>
+                    <h2 id="prediction-text" style="font-family:'Orbitron'; font-size: 2rem;">WAITING FOR DATA</h2>
+                    <div style="width:100%; height:10px; background:#333; border-radius:5px; margin-top:20px; overflow:hidden;">
+                        <div id="confidence-bar" style="width:0%; height:100%; background:var(--neon-blue); transition:1s;"></div>
+                    </div>
+                    <p style="margin-top:10px; color:var(--text-dim);">CONFIDENCE: <span id="confidence-text">0%</span></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="page-section">
+        <h1 style="font-family:'Orbitron'; font-size:3rem; margin-bottom:1rem;">SYSTEM INTELLIGENCE</h1>
+        <p style="max-width:600px; color:var(--text-dim); margin-bottom:3rem;">
+            AEGIS utilizes Transfer Learning based on MobileNetV2 architecture to identify boats and submerged objects in low-resolution sonar imagery.
+        </p>
+        
+        <div class="tech-grid">
+            <div class="tech-card">
+                <h3><i class="fa-brands fa-python"></i> The Core</h3>
+                <p>Backend powered by Flask & Python. Features seamless API integration for real-time inference.</p>
+            </div>
+            <div class="tech-card">
+                <h3><i class="fa-solid fa-brain"></i> Neural Net</h3>
+                <p>MobileNetV2 pretrained on ImageNet, fine-tuned with custom sonar datasets for 96% accuracy.</p>
+            </div>
+            <div class="tech-card">
+                <h3><i class="fa-solid fa-eye"></i> Vision</h3>
+                <p>Inputs are resized to 128x128 RGB tensors and normalized before analysis.</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // --- NAVIGATION LOGIC ---
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+
+            // Update Nav Buttons
+            document.querySelectorAll('.nav-links button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + pageId).classList.add('active');
+        }
+
+        // --- UPLOAD LOGIC ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewImg = document.getElementById('preview-img');
+        const scanLine = document.getElementById('scan-line');
+        
+        // Drag Effects
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#0ea5e9'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'rgba(14, 165, 233, 0.3)'; });
+        dropZone.addEventListener('drop', (e) => { 
+            e.preventDefault(); 
+            if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); 
+        });
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => { if(e.target.files.length) handleFile(e.target.files[0]); });
+
+        function handleFile(file) {
+            // Preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                document.querySelector('.drop-zone i').style.display = 'none';
+                document.querySelector('.drop-zone p').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+
+            // Upload
+            uploadAndPredict(file);
+        }
+
+        async function uploadAndPredict(file) {
+            // UI State: Scanning
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result-box').classList.remove('visible');
+            scanLine.style.display = 'block'; // Start laser scan animation
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // Fake delay for dramatic effect (optional)
+                await new Promise(r => setTimeout(r, 1500));
+
+                const response = await fetch('/predict', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                showResult(data);
+            } catch (err) {
+                console.error(err);
+                alert("System Malfunction: Cannot connect to Neural Core.");
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                scanLine.style.display = 'none';
+            }
+        }
+
+        function showResult(data) {
+            const { label, confidence, status } = data;
+            const resultBox = document.getElementById('result-box');
+            const statusCircle = document.getElementById('status-circle');
+            const statusIcon = document.getElementById('status-icon');
+            const confBar = document.getElementById('confidence-bar');
+            
+            resultBox.classList.add('visible');
+            document.getElementById('prediction-text').innerText = label;
+            document.getElementById('confidence-text').innerText = (confidence * 100).toFixed(1) + "%";
+            confBar.style.width = (confidence * 100) + "%";
+
+            // Visual Logic
+            if (status === 'DANGER') {
+                statusCircle.style.borderColor = 'var(--neon-red)';
+                statusCircle.style.color = 'var(--neon-red)';
+                statusIcon.className = 'fa-solid fa-triangle-exclamation';
+                confBar.style.background = 'var(--neon-red)';
+                document.getElementById('prediction-text').style.color = 'var(--neon-red)';
+            } else {
+                statusCircle.style.borderColor = 'var(--neon-green)';
+                statusCircle.style.color = 'var(--neon-green)';
+                statusIcon.className = 'fa-solid fa-shield-halved';
+                confBar.style.background = 'var(--neon-green)';
+                document.getElementById('prediction-text').style.color = 'var(--neon-green)';
+            }
+        }
+    </script>
+</body>
+</html>
