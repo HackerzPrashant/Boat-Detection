@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# --- CONFIGURATION ---
+# --- CONFIGURATION --- lets see now
 MODEL_PATH = 'topviwandsonar_transfer_model.h5'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
